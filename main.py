@@ -62,11 +62,23 @@ class GraphicsProgram3D:
         self.generate_map()
 
     def generate_map(self):
-        self.cells = [[Cell(x, z) for z in range(MAZE_DEPTH)] for x in range(MAZE_WIDTH)]
+        # self.cells = [[Cell(x, z) for z in range(MAZE_DEPTH)] for x in range(MAZE_WIDTH)]
+
+        self.cells = []
+        for x in range(MAZE_WIDTH):
+            column = []
+            for z in range(MAZE_DEPTH):
+                cell = Cell(x, z)
+                column.append(cell)
+
+                self.walls.append(cell.leftWall)
+                self.walls.append(cell.bottomWall)
+
+            self.cells.append(column)
+
         self.walls.append(Cube(0, 0, MAZE_DEPTH * CELL_SIZE, MAZE_WIDTH * CELL_SIZE, WALL_HEIGHT * 2, WALL_THICKNESS, (1, 1, 1)))
         self.walls.append(Cube(MAZE_WIDTH * CELL_SIZE, 0, 0, WALL_THICKNESS, WALL_HEIGHT * 2, MAZE_DEPTH * CELL_SIZE + WALL_THICKNESS, (1, 1, 1)))
 
-        self.walls.append(Cube(2, 0, 6, 0.5, 0.2, 0.5, (1, 0, 0)))
         # self.cells = []
 
     def update(self):
@@ -76,6 +88,7 @@ class GraphicsProgram3D:
             cube.update(delta_time)
 
         colliders = [*self.walls, *self.moving_cubes]
+
         self.player.update(self.keys, colliders, delta_time)
         # print(self.player.pos)
 
