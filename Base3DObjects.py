@@ -1,12 +1,7 @@
-
-import random
-from random import *
-
-from OpenGL.GL import *
-from OpenGL.GLU import *
-
 import math
 from math import *
+
+from OpenGL.GL import *
 
 
 class Point:

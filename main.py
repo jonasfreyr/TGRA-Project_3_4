@@ -1,7 +1,7 @@
 # from OpenGL.GL import *
 # from OpenGL.GLU import *
 
-import pygame
+import pygame, random
 
 from Shaders import *
 from objects import *
@@ -61,20 +61,53 @@ class GraphicsProgram3D:
 
         self.generate_map()
 
+    def _remove_wall(self, from_cell, to_cell):
+        from_x = from_cell.cell_X
+        from_z = from_cell.cell_Z
+
+        to_x = to_cell.cell_X
+        to_z = to_cell.cell_Z
+
+        if from_x > to_x:
+            from_cell.bottomWall = None
+        elif from_x < to_x:
+            to_cell.bottomWall = None
+        elif from_z > to_z:
+            from_cell.leftWall = None
+        elif from_z < to_z:
+            to_cell.leftWall = None
+
+    def make_maze(self, current_cell, goal_cell, cells):
+        current_cell.visited = True
+
+        if current_cell == goal_cell: return
+
+        x = current_cell.cell_X
+        z = current_cell.cell_Z
+
+        neighbors = []
+        if x > 1:
+            neighbors.append(cells[x - 1][z])
+        if x < MAZE_WIDTH-1:
+            neighbors.append(cells[x + 1][z])
+
+        if z > 1:
+            neighbors.append(cells[x][z - 1])
+        if z < MAZE_DEPTH-1:
+            neighbors.append(cells[x][z - 1])
+
+        for cell in neighbors:
+            if not cell.visited:
+                self._remove_wall(current_cell, cell)
+                self.make_maze(cell, goal_cell, cells)
+
     def generate_map(self):
-        # self.cells = [[Cell(x, z) for z in range(MAZE_DEPTH)] for x in range(MAZE_WIDTH)]
+        self.cells = [[Cell(x, z) for z in range(MAZE_DEPTH)] for x in range(MAZE_WIDTH)]
 
-        self.cells = []
-        for x in range(MAZE_WIDTH):
-            column = []
-            for z in range(MAZE_DEPTH):
-                cell = Cell(x, z)
-                column.append(cell)
+        start_point = self.cells[random.randint(0, MAZE_WIDTH-1)][random.randint(0, MAZE_DEPTH-1)]
+        goal_point = self.cells[random.randint(0, MAZE_WIDTH-1)][random.randint(0, MAZE_DEPTH-1)]
 
-                self.walls.append(cell.leftWall)
-                self.walls.append(cell.bottomWall)
-
-            self.cells.append(column)
+        self.make_maze(start_point, goal_point, self.cells)
 
         self.walls.append(Cube(0, 0, MAZE_DEPTH * CELL_SIZE, MAZE_WIDTH * CELL_SIZE, WALL_HEIGHT * 2, WALL_THICKNESS, (1, 1, 1)))
         self.walls.append(Cube(MAZE_WIDTH * CELL_SIZE, 0, 0, WALL_THICKNESS, WALL_HEIGHT * 2, MAZE_DEPTH * CELL_SIZE + WALL_THICKNESS, (1, 1, 1)))
@@ -98,8 +131,8 @@ class GraphicsProgram3D:
 
         for column in self.cells:
             for cell in column:
-                cell.bottomWall.draw()
-                cell.leftWall.draw()
+                if cell.bottomWall: cell.bottomWall.draw()
+                if cell.leftWall: cell.leftWall.draw()
 
     def draw_moving(self):
         for cube in self.moving_cubes:
