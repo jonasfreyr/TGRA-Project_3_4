@@ -49,7 +49,7 @@ class GraphicsProgram3D:
     def init_objects(self):
         self.walls = [Cube(0, -1, 0, 100, 1, 100, (0.5, 0.5, 0.5))]
 
-        self.player = Player(1, 0, 1, 1, 0.3, self.shader)
+        self.player = Player(1, 0, 1, 0.5, 0.3, self.shader)
 
         # self.walls.append(Cube(10, 0, 10, 20, 4, 1, (0, 1, 0)))
         # self.walls.append(Cube(10, 0, 20, 20, 4, 1, (1, 0, 0)))
@@ -62,7 +62,12 @@ class GraphicsProgram3D:
         self.generate_map()
 
     def generate_map(self):
-        self.cells = [[Cell(x, z) for z in range(MAZE_DEPTH)] for x in range (MAZE_WIDTH)]
+        self.cells = [[Cell(x, z) for z in range(MAZE_DEPTH)] for x in range(MAZE_WIDTH)]
+        self.walls.append(Cube(0, 0, MAZE_DEPTH * CELL_SIZE, MAZE_WIDTH * CELL_SIZE, WALL_HEIGHT * 2, WALL_THICKNESS, (1, 1, 1)))
+        self.walls.append(Cube(MAZE_WIDTH * CELL_SIZE, 0, 0, WALL_THICKNESS, WALL_HEIGHT * 2, MAZE_DEPTH * CELL_SIZE + WALL_THICKNESS, (1, 1, 1)))
+
+        self.walls.append(Cube(2, 0, 6, 0.5, 0.2, 0.5, (1, 0, 0)))
+        # self.cells = []
 
     def update(self):
         delta_time = self.clock.tick() / 1000.0
@@ -72,7 +77,7 @@ class GraphicsProgram3D:
 
         colliders = [*self.walls, *self.moving_cubes]
         self.player.update(self.keys, colliders, delta_time)
-        print(self.player.pos)
+        # print(self.player.pos)
 
     def draw_walls(self):
         for wall in self.walls:

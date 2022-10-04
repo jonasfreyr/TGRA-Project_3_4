@@ -120,7 +120,7 @@ class Player:
                     self.__landed = True
                     self.vel.y = 0
 
-                return Vector(x, y, z) + vec
+                pos = Vector(x, y, z) + vec
 
         return pos
 
@@ -137,7 +137,7 @@ class Player:
         elif keys[K_d]: move_vec.x +=  PLAYER_MOVEMENT_SPEED * delta_time
 
         if keys[K_SPACE] and self.__landed:
-            move_vec.y += PLAYER_JUMP_FORCE
+            move_vec.y += PLAYER_JUMP_FORCE * delta_time
             self.__landed = False
 
         self.vel += move_vec.rotate2dReturn(self.rotation)
@@ -148,7 +148,13 @@ class Player:
         self.vel.x = 0
         self.vel.z = 0
 
-        self.pos = self.collision(colliders, self.pos)
+        temp_pos = self.pos.copy()
+        temp_pos.y += self.radius
+
+        bottom_pos = self.collision(colliders, temp_pos)
+        bottom_pos.y -= self.radius
+
+        self.pos = bottom_pos
 
         temp_pos = self.pos.copy()
         temp_pos.y += self.height
