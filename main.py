@@ -69,13 +69,13 @@ class GraphicsProgram3D:
         to_z = to_cell.cell_Z
 
         if from_x > to_x:
-            from_cell.bottomWall = None
+            from_cell.rightWall = None
         elif from_x < to_x:
+            to_cell.rightWall = None
+        elif from_z < to_z:
             to_cell.bottomWall = None
         elif from_z > to_z:
-            from_cell.leftWall = None
-        elif from_z < to_z:
-            to_cell.leftWall = None
+            from_cell.bottomWall = None
 
     def make_maze(self, current_cell, goal_cell, cells):
         current_cell.visited = True
@@ -86,15 +86,17 @@ class GraphicsProgram3D:
         z = current_cell.cell_Z
 
         neighbors = []
-        if x > 1:
+        if x > 0:
             neighbors.append(cells[x - 1][z])
         if x < MAZE_WIDTH-1:
             neighbors.append(cells[x + 1][z])
 
-        if z > 1:
+        if z > 0:
             neighbors.append(cells[x][z - 1])
         if z < MAZE_DEPTH-1:
-            neighbors.append(cells[x][z - 1])
+            neighbors.append(cells[x][z + 1])
+
+        random.shuffle(neighbors)
 
         for cell in neighbors:
             if not cell.visited:
@@ -132,7 +134,7 @@ class GraphicsProgram3D:
         for column in self.cells:
             for cell in column:
                 if cell.bottomWall: cell.bottomWall.draw()
-                if cell.leftWall: cell.leftWall.draw()
+                if cell.rightWall: cell.rightWall.draw()
 
     def draw_moving(self):
         for cube in self.moving_cubes:

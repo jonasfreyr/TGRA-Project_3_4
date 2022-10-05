@@ -13,7 +13,7 @@ class Cell:
         self.pixel_Z = z * CELL_SIZE
 
         self.bottomWall = Cube(self.pixel_X, 0, self.pixel_Z, CELL_SIZE, WALL_HEIGHT, WALL_THICKNESS, (1, 1, 1))
-        self.leftWall = Cube(self.pixel_X, 0, self.pixel_Z, WALL_THICKNESS, WALL_HEIGHT, CELL_SIZE, (1, 1, 1))
+        self.rightWall = Cube(self.pixel_X, 0, self.pixel_Z, WALL_THICKNESS, WALL_HEIGHT, CELL_SIZE, (1, 1, 1))
 
         self.visited = False
 
