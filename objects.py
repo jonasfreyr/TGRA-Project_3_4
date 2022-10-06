@@ -5,15 +5,18 @@ from constants import *
 
 
 class Cell:
-    def __init__(self, x, z):
+    def __init__(self, x, z, y):
         self.cell_X = x
         self.cell_Z = z
+        self.cell_Y = y
 
         self.pixel_X = x * CELL_SIZE
         self.pixel_Z = z * CELL_SIZE
+        self.pixel_Y = (y * WALL_HEIGHT) + (FLOOR_THICKNESS * y)
 
-        self.bottomWall = Cube(self.pixel_X, 0, self.pixel_Z, CELL_SIZE, WALL_HEIGHT, WALL_THICKNESS, (1, 1, 1))
-        self.rightWall = Cube(self.pixel_X, 0, self.pixel_Z, WALL_THICKNESS, WALL_HEIGHT, CELL_SIZE, (1, 1, 1))
+        self.bottomWall = Cube(self.pixel_X, self.pixel_Y, self.pixel_Z, CELL_SIZE, WALL_HEIGHT, WALL_THICKNESS, (1, 1, 1))
+        self.rightWall = Cube(self.pixel_X, self.pixel_Y, self.pixel_Z, WALL_THICKNESS, WALL_HEIGHT, CELL_SIZE, (1, 1, 1))
+        self.ceiling = Cube(self.pixel_X, self.pixel_Y + WALL_HEIGHT, self.pixel_Z, CELL_SIZE, FLOOR_THICKNESS, CELL_SIZE, FLOOR_COLOR)
 
         self.visited = False
 
@@ -84,7 +87,7 @@ class Player:
         self.projection_matrix = ProjectionMatrix()
 
         self.view_matrix.slide(self.pos.x, self.pos.y + height, self.pos.z)
-        self.projection_matrix.set_perspective(75, WINDOW_WIDTH / WINDOW_HEIGHT, 0.1, 100)
+        self.projection_matrix.set_perspective(75, WINDOW_WIDTH / WINDOW_HEIGHT, 0.1, 50)
 
         self.shader.set_view_matrix(self.view_matrix.get_matrix())
         self.shader.set_projection_matrix(self.projection_matrix.get_matrix())
@@ -120,6 +123,9 @@ class Player:
 
                 if vec.y > 0:
                     self.__landed = True
+                    self.vel.y = 0
+
+                elif vec.y < 0:
                     self.vel.y = 0
 
                 pos = Vector(x, y, z) + vec
@@ -167,10 +173,14 @@ class Player:
         self.update_player_camera()
 
     def update_player_camera(self):
-        move_pos = self.pos.rotate2dReturn(-self.rotation) - self.__last_pos.rotate2dReturn(-self.rotation)
+        # move_pos = self.pos.rotate2dReturn(-self.rotation) - self.__last_pos.rotate2dReturn(-self.rotation)
         move_rotate = self.rotation - self.__last_rotation
 
-        self.view_matrix.slide(move_pos.x, move_pos.y, move_pos.z)
+        # self.view_matrix.slide(move_pos.x, move_pos.y, move_pos.z)
+
+        temp = self.pos.copy()
+        temp.y += self.height
+        self.view_matrix.eye = temp
 
         self.view_matrix.yaw(move_rotate)
 
@@ -191,21 +201,25 @@ class Cube(BaseCube):
         self.color = color
         self.collider = Collider(self.pos, self.size)
 
+        self.__calculate_inital_matrix()
+
+    def __calculate_inital_matrix(self):
+        if BaseCube.MODEL:
+            BaseCube.MODEL.push_matrix()
+            BaseCube.MODEL.load_identity()
+            BaseCube.MODEL.add_translation(self.pos.x + self.size.x / 2, self.pos.y + self.size.y / 2,
+                                           self.pos.z + self.size.z / 2)
+            BaseCube.MODEL.add_scale(self.size.x, self.size.y, self.size.z)
+            self.matrix = BaseCube.MODEL.matrix
+            BaseCube.MODEL.pop_matrix()
+
     def update(self, delta_time):
         pass
 
     def draw(self):
         shader = BaseCube.SHADER
-
-        BaseCube.MODEL.push_matrix()
-        BaseCube.MODEL.load_identity()
-        BaseCube.MODEL.add_translation(self.pos.x + self.size.x / 2, self.pos.y + self.size.y / 2,
-                                       self.pos.z + self.size.z / 2)
-        BaseCube.MODEL.add_scale(self.size.x, self.size.y, self.size.z)
-        shader.set_model_matrix(BaseCube.MODEL.matrix)
+        shader.set_model_matrix(self.matrix)
         shader.set_solid_color(*self.color)
-        BaseCube.MODEL.pop_matrix()
-
         super(Cube, self).draw()
 
 
@@ -227,7 +241,7 @@ class MovingCube(Cube):
 
         dist_vec = going_to_point - self.pos
 
-        if dist_vec.__len__() <= 0.1:
+        if dist_vec.__len__() <= 0.01:
             self.moving_to_end = not self.moving_to_end
 
         else:
@@ -237,3 +251,16 @@ class MovingCube(Cube):
             self.collider.pos = self.pos
 
             # print(self.collider.pos)
+
+    def draw(self):
+        BaseCube.MODEL.push_matrix()
+        BaseCube.MODEL.load_identity()
+        BaseCube.MODEL.add_translation(self.pos.x + self.size.x / 2, self.pos.y + self.size.y / 2,
+                                       self.pos.z + self.size.z / 2)
+        BaseCube.MODEL.add_scale(self.size.x, self.size.y, self.size.z)
+
+        self.matrix = BaseCube.MODEL.matrix
+
+        BaseCube.MODEL.pop_matrix()
+
+        super(MovingCube, self).draw()
