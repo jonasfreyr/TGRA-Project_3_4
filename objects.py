@@ -14,9 +14,12 @@ class Cell:
         self.pixel_Z = z * CELL_SIZE
         self.pixel_Y = (y * WALL_HEIGHT) + (FLOOR_THICKNESS * y)
 
-        self.bottomWall = Cube(self.pixel_X, self.pixel_Y, self.pixel_Z, CELL_SIZE, WALL_HEIGHT, WALL_THICKNESS, (1, 1, 1))
-        self.rightWall = Cube(self.pixel_X, self.pixel_Y, self.pixel_Z, WALL_THICKNESS, WALL_HEIGHT, CELL_SIZE, (1, 1, 1))
-        self.ceiling = Cube(self.pixel_X, self.pixel_Y + WALL_HEIGHT, self.pixel_Z, CELL_SIZE, FLOOR_THICKNESS, CELL_SIZE, FLOOR_COLOR)
+        self.bottomWall = Cube(self.pixel_X, self.pixel_Y, self.pixel_Z, CELL_SIZE,
+                               WALL_HEIGHT, WALL_THICKNESS, WHITE_COLOR)
+        self.rightWall = Cube(self.pixel_X, self.pixel_Y, self.pixel_Z, WALL_THICKNESS,
+                              WALL_HEIGHT, CELL_SIZE, WHITE_COLOR)
+        self.ceiling = Cube(self.pixel_X, self.pixel_Y + WALL_HEIGHT, self.pixel_Z, CELL_SIZE,
+                            FLOOR_THICKNESS, CELL_SIZE, GREEN_COLOR)
 
         self.visited = False
 
@@ -188,7 +191,45 @@ class Player:
         self.__last_rotation = self.rotation
 
     def draw(self):
+        self.shader.set_camera_position(self.pos.x, self.pos.y, self.pos.z)
         self.shader.set_view_matrix(self.view_matrix.get_matrix())
+
+
+class Light:
+    def __init__(self, x, y, z, color, shader):
+        self.pos = Vector(x, y, z)
+        self.color = color
+        self.shader = shader
+
+    @property
+    def pos_array(self):
+        return self.pos.x, self.pos.y, self.pos.z
+
+    def draw(self):
+        self.shader.set_light_position(*self.pos_array)
+        self.shader.set_light_diffuse(*self.color.diffuse)
+        self.shader.set_light_specular(*self.color.specular)
+        self.shader.set_light_ambient(*self.color.ambient)
+
+
+class Color:
+    def __init__(self, r, g, b, s, ambient_factor):
+        self.mat_diffuse = Vector(r, g, b)
+        self.mat_specular = Vector(1, 1, 1)
+        self.mat_ambient = Vector(r/ambient_factor, g/ambient_factor, b/ambient_factor)
+        self.shininess = s
+
+    @property
+    def diffuse(self):
+        return self.mat_diffuse.x, self.mat_diffuse.y, self.mat_diffuse.z
+
+    @property
+    def specular(self):
+        return self.mat_specular.x, self.mat_specular.y, self.mat_specular.z
+
+    @property
+    def ambient(self):
+        return self.mat_ambient.x, self.mat_ambient.y, self.mat_ambient.z
 
 
 class Cube(BaseCube):
@@ -219,7 +260,13 @@ class Cube(BaseCube):
     def draw(self):
         shader = BaseCube.SHADER
         shader.set_model_matrix(self.matrix)
-        shader.set_solid_color(*self.color)
+        # shader.set_solid_color(*self.color)
+
+        shader.set_material_diffuse(*self.color.diffuse)
+        shader.set_material_specular(*self.color.specular)
+        shader.set_material_ambient(*self.color.ambient)
+        shader.set_shininess(self.color.shininess)
+
         super(Cube, self).draw()
 
 
@@ -264,3 +311,8 @@ class MovingCube(Cube):
         BaseCube.MODEL.pop_matrix()
 
         super(MovingCube, self).draw()
+
+
+WHITE_COLOR = Color(1, 1, 1, 100, 10)
+GREEN_COLOR = Color(0, 0.5, 0, 100, 10)
+BLUE_COLOR = Color(0, 0, 1, 100, 10)

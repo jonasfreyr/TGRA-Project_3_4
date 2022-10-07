@@ -45,13 +45,16 @@ class GraphicsProgram3D:
 
         model_matrix = ModelMatrix()
 
-        Cube(0, 0, 0, 0, 0, 0, (0, 0, 0)).init_openGL(self.shader, model_matrix)
+        Cube(0, 0, 0, 0, 0, 0, WHITE_COLOR).init_openGL(self.shader, model_matrix)
 
     def init_objects(self):
         self.walls = []
-        self.walls.append(Cube(0, -1, 0, 100, 1, 100, FLOOR_COLOR))
+        self.walls.append(Cube(0, -1, 0, 100, 1, 100, GREEN_COLOR))
 
         self.player = Player(1, 0, 1, 0.5, 0.2, self.shader)
+
+        light_color = Color(1, 1, 1, 0, 2)
+        self.light = Light(MAZE_WIDTH * CELL_SIZE, 30, MAZE_DEPTH * CELL_SIZE, light_color, self.shader)
 
         # self.walls.append(Cube(10, 0, 10, 20, 4, 1, (0, 1, 0)))
         # self.walls.append(Cube(10, 0, 20, 20, 4, 1, (1, 0, 0)))
@@ -72,7 +75,7 @@ class GraphicsProgram3D:
         last_goal = self.start_point
         for level in range(MAZE_LEVELS):
             last_goal = self.generate_map(last_goal, level)
-            self.moving_cubes.append(MovingCube(last_goal.pixel_X + WALL_THICKNESS, last_goal.pixel_Y, last_goal.pixel_Z + WALL_THICKNESS, CELL_SIZE - WALL_THICKNESS, ELEVATOR_THICKNESS, CELL_SIZE - WALL_THICKNESS, (0, 0, 1), Vector(last_goal.pixel_X + WALL_THICKNESS, last_goal.pixel_Y + WALL_HEIGHT + FLOOR_THICKNESS, last_goal.pixel_Z + WALL_THICKNESS), 0.1))
+            self.moving_cubes.append(MovingCube(last_goal.pixel_X + WALL_THICKNESS, last_goal.pixel_Y, last_goal.pixel_Z + WALL_THICKNESS, CELL_SIZE - WALL_THICKNESS, ELEVATOR_THICKNESS, CELL_SIZE - WALL_THICKNESS, BLUE_COLOR, Vector(last_goal.pixel_X + WALL_THICKNESS, last_goal.pixel_Y + WALL_HEIGHT + FLOOR_THICKNESS, last_goal.pixel_Z + WALL_THICKNESS), 0.1))
 
             last_goal.ceiling = None
             if last_goal.cell_Y < MAZE_LEVELS-1:
@@ -129,8 +132,8 @@ class GraphicsProgram3D:
 
         self.make_maze(start, goal_point, self.cells, level)
 
-        self.walls.append(Cube(0, 0, MAZE_DEPTH * CELL_SIZE, MAZE_WIDTH * CELL_SIZE, WALL_HEIGHT * MAZE_LEVELS + FLOOR_THICKNESS * MAZE_LEVELS, WALL_THICKNESS, (1, 1, 1)))
-        self.walls.append(Cube(MAZE_WIDTH * CELL_SIZE, 0, 0, WALL_THICKNESS, WALL_HEIGHT * MAZE_LEVELS + FLOOR_THICKNESS * MAZE_LEVELS, MAZE_DEPTH * CELL_SIZE + WALL_THICKNESS, (1, 1, 1)))
+        self.walls.append(Cube(0, 0, MAZE_DEPTH * CELL_SIZE, MAZE_WIDTH * CELL_SIZE, WALL_HEIGHT * MAZE_LEVELS + FLOOR_THICKNESS * MAZE_LEVELS, WALL_THICKNESS, WHITE_COLOR))
+        self.walls.append(Cube(MAZE_WIDTH * CELL_SIZE, 0, 0, WALL_THICKNESS, WALL_HEIGHT * MAZE_LEVELS + FLOOR_THICKNESS * MAZE_LEVELS, MAZE_DEPTH * CELL_SIZE + WALL_THICKNESS, WHITE_COLOR))
 
         return goal_point
 
@@ -242,6 +245,8 @@ class GraphicsProgram3D:
             GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)  ### --- YOU CAN ALSO CLEAR ONLY THE COLOR OR ONLY THE DEPTH --- ###
 
         glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
+
+        self.light.draw()
 
         self.player.draw()
 
