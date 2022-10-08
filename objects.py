@@ -102,6 +102,13 @@ class Player:
 
         self.vel = Vector(0, 0, 0)
 
+    @property
+    def top_pos(self):
+        temp = self.pos.copy()
+        temp.y += self.height
+
+        return temp
+
     def collision(self, cubes, pos):
         for box in cubes:
             cube = box.collider
@@ -167,8 +174,9 @@ class Player:
 
         self.pos = bottom_pos
 
-        temp_pos = self.pos.copy()
-        temp_pos.y += self.height
+        # temp_pos = self.pos.copy()
+        # temp_pos.y += self.height
+        temp_pos = self.top_pos
         top_pos = self.collision(colliders, temp_pos)
         top_pos.y -= self.height
         self.pos = top_pos
@@ -274,7 +282,8 @@ class MovingCube(Cube):
     def __init__(self, x, y, z, width, height, depth, color, end, speed):
         super(MovingCube, self).__init__(x, y, z, width, height, depth, color)
 
-        self.start_point = Vector(x, y, z)
+        self.start_point = Vector(x, y-height, z)
+        end.y -= height
         self.end_point = end
         self.speed = speed
 

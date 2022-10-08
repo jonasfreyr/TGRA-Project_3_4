@@ -53,7 +53,7 @@ class GraphicsProgram3D:
 
         self.player = Player(1, 0, 1, 0.5, 0.2, self.shader)
 
-        light_color = Color(1, 1, 1, 0, 2)
+        light_color = Color(0.5, 0.5, 0.5, 0, 2)
         self.light = Light(MAZE_WIDTH * CELL_SIZE, 30, MAZE_DEPTH * CELL_SIZE, light_color, self.shader)
 
         # self.walls.append(Cube(10, 0, 10, 20, 4, 1, (0, 1, 0)))
@@ -67,8 +67,8 @@ class GraphicsProgram3D:
         self.cells = [[[Cell(x, z, y) for z in range(MAZE_DEPTH)] for x in range(MAZE_WIDTH)] for y in
                       range(MAZE_LEVELS)]
 
-        self.goal_points = set()
         self.start_point = self.cells[0][random.randint(0, MAZE_WIDTH - 1)][random.randint(0, MAZE_DEPTH - 1)]
+        self.goal_points = {self.start_point}
 
         self.player.pos = Vector(self.start_point.pixel_X + CELL_SIZE / 2, 0, self.start_point.pixel_Z + CELL_SIZE / 2)
 
@@ -77,9 +77,12 @@ class GraphicsProgram3D:
             last_goal = self.generate_map(last_goal, level)
             self.moving_cubes.append(MovingCube(last_goal.pixel_X + WALL_THICKNESS, last_goal.pixel_Y, last_goal.pixel_Z + WALL_THICKNESS, CELL_SIZE - WALL_THICKNESS, ELEVATOR_THICKNESS, CELL_SIZE - WALL_THICKNESS, BLUE_COLOR, Vector(last_goal.pixel_X + WALL_THICKNESS, last_goal.pixel_Y + WALL_HEIGHT + FLOOR_THICKNESS, last_goal.pixel_Z + WALL_THICKNESS), 0.1))
 
-            last_goal.ceiling = None
+            self._remove_ceiling(last_goal)
             if last_goal.cell_Y < MAZE_LEVELS-1:
                 last_goal = self.cells[level+1][last_goal.cell_X][last_goal.cell_Z]
+                self.goal_points.add(last_goal)
+    def _remove_ceiling(self, cell):
+        cell.ceiling = None
 
     def _remove_wall(self, from_cell, to_cell):
         from_x = from_cell.cell_X
@@ -188,11 +191,6 @@ class GraphicsProgram3D:
             wall = self.cells[cell.cell_Y][cell.cell_X-1][cell.cell_Z+1].bottomWall
             if wall: walls.append(wall)
 
-        # Ceiling from lower cell
-        if cell.cell_Y > 0:
-            wall = self.cells[cell.cell_Y-1][cell.cell_X][cell.cell_Z].ceiling
-            if wall: walls.append(wall)
-
         return walls
 
     def update(self):
@@ -211,6 +209,17 @@ class GraphicsProgram3D:
             if 0 <= player_cell_y < MAZE_LEVELS:
                 player_cell = self.cells[player_cell_y][player_cell_x][player_cell_z]
                 colliders.extend(self.get_walls_from_cell(player_cell))
+
+                # Walls from the lower cell
+                if player_cell_y > 0:
+                    lower_cell = self.cells[player_cell_y-1][player_cell_x][player_cell_z]
+                    colliders.extend(self.get_walls_from_cell(lower_cell))
+
+                # Walls from the above cell
+                if player_cell_y < MAZE_LEVELS-1:
+                    higher_cell = self.cells[player_cell_y+1][player_cell_x][player_cell_z]
+                    colliders.extend(self.get_walls_from_cell(higher_cell))
+
             elif player_cell_y >= MAZE_LEVELS:
                 player_cell = self.cells[MAZE_LEVELS-1][player_cell_x][player_cell_z]
                 colliders.extend(self.get_walls_from_cell(player_cell))
@@ -245,6 +254,8 @@ class GraphicsProgram3D:
             GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)  ### --- YOU CAN ALSO CLEAR ONLY THE COLOR OR ONLY THE DEPTH --- ###
 
         glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
+
+        self.light.pos = self.player.top_pos
 
         self.light.draw()
 
