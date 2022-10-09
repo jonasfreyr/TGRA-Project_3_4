@@ -59,8 +59,8 @@ class Collider:
     def points(self):
         return [
             self.pos,
-            Vector(self.pos.x + self.size.x, self.pos.y,  self.pos.z),
-            Vector(self.pos.x, self.pos.y + self.size.y,  self.pos.z),
+            Vector(self.pos.x + self.size.x, self.pos.y, self.pos.z),
+            Vector(self.pos.x, self.pos.y + self.size.y, self.pos.z),
             Vector(self.pos.x + self.size.x, self.pos.y + self.size.y, self.pos.z),
 
             Vector(self.pos.x, self.pos.y, self.pos.z + self.size.z),
@@ -111,48 +111,36 @@ class Player:
 
     def collision(self, cubes, pos):
         for box in cubes:
-            cube = box.collider
-            x = max(cube.minX, min(pos.x, cube.maxX))
-            y = max(cube.minY, min(pos.y, cube.maxY))
-            z = max(cube.minZ, min(pos.z, cube.maxZ))
+            closest_pos, move_vec = box.collide(pos, self.radius)
 
-            distance = math.sqrt(
-                (x - pos.x) * (x - pos.x) +
-                (y - pos.y) * (y - pos.y) +
-                (z - pos.z) * (z - pos.z)
-            )
+            if move_vec.y > 0:
+                self.__landed = True
+                self.vel.y = 0
 
-            if distance < self.radius:
-                vec = pos - Vector(x, y, z)
-                try:
-                    vec.normalize()
-                except ZeroDivisionError:
-                    pass
+            elif move_vec.y < 0:
+                self.vel.y = 0
 
-                vec.mul(self.radius)
-
-                if vec.y > 0:
-                    self.__landed = True
-                    self.vel.y = 0
-
-                elif vec.y < 0:
-                    self.vel.y = 0
-
-                pos = Vector(x, y, z) + vec
+            pos = closest_pos + move_vec
 
         return pos
 
     def update(self, keys, colliders, delta_time):
-        if keys[K_LEFT]:    self.rotation -= PLAYER_LOOK_SPEED * delta_time
-        elif keys[K_RIGHT]: self.rotation += PLAYER_LOOK_SPEED * delta_time
+        if keys[K_LEFT]:
+            self.rotation -= PLAYER_LOOK_SPEED * delta_time
+        elif keys[K_RIGHT]:
+            self.rotation += PLAYER_LOOK_SPEED * delta_time
 
         move_vec = Vector(0, 0, 0)
 
-        if keys[K_w]:   move_vec.z += -PLAYER_MOVEMENT_SPEED * delta_time
-        elif keys[K_s]: move_vec.z +=  PLAYER_MOVEMENT_SPEED * delta_time
+        if keys[K_w]:
+            move_vec.z += -PLAYER_MOVEMENT_SPEED * delta_time
+        elif keys[K_s]:
+            move_vec.z += PLAYER_MOVEMENT_SPEED * delta_time
 
-        if keys[K_a]:   move_vec.x += -PLAYER_MOVEMENT_SPEED * delta_time
-        elif keys[K_d]: move_vec.x +=  PLAYER_MOVEMENT_SPEED * delta_time
+        if keys[K_a]:
+            move_vec.x += -PLAYER_MOVEMENT_SPEED * delta_time
+        elif keys[K_d]:
+            move_vec.x += PLAYER_MOVEMENT_SPEED * delta_time
 
         if keys[K_SPACE] and self.__landed:
             move_vec.y += PLAYER_JUMP_FORCE * delta_time
@@ -224,7 +212,7 @@ class Color:
     def __init__(self, r, g, b, s, ambient_factor):
         self.mat_diffuse = Vector(r, g, b)
         self.mat_specular = Vector(1, 1, 1)
-        self.mat_ambient = Vector(r/ambient_factor, g/ambient_factor, b/ambient_factor)
+        self.mat_ambient = Vector(r / ambient_factor, g / ambient_factor, b / ambient_factor)
         self.shininess = s
 
     @property
@@ -250,17 +238,42 @@ class Cube(BaseCube):
         self.color = color
         self.collider = Collider(self.pos, self.size)
 
-        self.__calculate_inital_matrix()
+        self.calculate_initial_matrix()
 
-    def __calculate_inital_matrix(self):
+    def calculate_initial_matrix(self):
         if BaseCube.MODEL:
             BaseCube.MODEL.push_matrix()
             BaseCube.MODEL.load_identity()
             BaseCube.MODEL.add_translation(self.pos.x + self.size.x / 2, self.pos.y + self.size.y / 2,
                                            self.pos.z + self.size.z / 2)
             BaseCube.MODEL.add_scale(self.size.x, self.size.y, self.size.z)
+            BaseCube.MODEL.add_rotation(self.rotation.x, self.rotation.y, self.rotation.z)
             self.matrix = BaseCube.MODEL.matrix
             BaseCube.MODEL.pop_matrix()
+
+    def collide(self, pos, radius):
+        cube = self.collider
+        x = max(cube.minX, min(pos.x, cube.maxX))
+        y = max(cube.minY, min(pos.y, cube.maxY))
+        z = max(cube.minZ, min(pos.z, cube.maxZ))
+
+        distance = math.sqrt(
+            (x - pos.x) * (x - pos.x) +
+            (y - pos.y) * (y - pos.y) +
+            (z - pos.z) * (z - pos.z)
+        )
+
+        if distance < radius:
+            vec = pos - Vector(x, y, z)
+            try:
+                vec.normalize()
+            except ZeroDivisionError:
+                pass
+
+            vec.mul(radius)
+
+            return Vector(x, y, z), vec
+        return pos, Vector(0, 0, 0)
 
     def update(self, delta_time):
         pass
@@ -282,7 +295,7 @@ class MovingCube(Cube):
     def __init__(self, x, y, z, width, height, depth, color, end, speed):
         super(MovingCube, self).__init__(x, y, z, width, height, depth, color)
 
-        self.start_point = Vector(x, y-height, z)
+        self.start_point = Vector(x, y - height, z)
         end.y -= height
         self.end_point = end
         self.speed = speed
@@ -309,19 +322,39 @@ class MovingCube(Cube):
             # print(self.collider.pos)
 
     def draw(self):
-        BaseCube.MODEL.push_matrix()
-        BaseCube.MODEL.load_identity()
-        BaseCube.MODEL.add_translation(self.pos.x + self.size.x / 2, self.pos.y + self.size.y / 2,
-                                       self.pos.z + self.size.z / 2)
-        BaseCube.MODEL.add_scale(self.size.x, self.size.y, self.size.z)
-
-        self.matrix = BaseCube.MODEL.matrix
-
-        BaseCube.MODEL.pop_matrix()
+        self.calculate_initial_matrix()
 
         super(MovingCube, self).draw()
 
 
+class Reward(MovingCube):
+    def __init__(self, x, y, z, size, color, bobbing_speed):
+        end_point = Vector(x, y + size, z)
+        super(Reward, self).__init__(x, y, z, size / 2, size, size / 2, color, end_point, bobbing_speed)
+
+        self.rotation = Vector(90, 45, 45)
+
+        self.collected = False
+
+    def update(self, delta_time):
+        self.rotation.z += REWARD_ROTATION_SPEED * delta_time
+        self.rotation.x += REWARD_ROTATION_SPEED * delta_time
+        self.rotation.y += REWARD_ROTATION_SPEED * delta_time
+        super(Reward, self).update(delta_time)
+
+    def collide(self, pos, radius):
+        _, move_vec = super(Reward, self).collide(pos, radius)
+
+        if move_vec.__len__() > 0: self.collected = True
+
+        return pos, Vector(0, 0, 0)
+
+    def draw(self):
+        if not self.collected:
+            super(Reward, self).draw()
+
 WHITE_COLOR = Color(1, 1, 1, 100, 10)
 GREEN_COLOR = Color(0, 0.5, 0, 100, 10)
 BLUE_COLOR = Color(0, 0, 1, 100, 10)
+RED_COLOR = Color(1, 0, 0, 100, 10)
+GOLD_COLOR = Color(4, 4, 0, 2, 10)

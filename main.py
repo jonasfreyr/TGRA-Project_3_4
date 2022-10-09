@@ -81,7 +81,22 @@ class GraphicsProgram3D:
             if last_goal.cell_Y < MAZE_LEVELS-1:
                 last_goal = self.cells[level+1][last_goal.cell_X][last_goal.cell_Z]
                 self.goal_points.add(last_goal)
+
+        x = random.randint(0, MAZE_WIDTH * CELL_SIZE)
+        z = random.randint(0, MAZE_DEPTH * CELL_SIZE)
+        y = MAZE_LEVELS * WALL_HEIGHT + FLOOR_THICKNESS + WALL_HEIGHT / 2
+
+        self.moving_cubes.append(Reward(x, y, z, 0.3, GOLD_COLOR, 0.1))
+
     def _remove_ceiling(self, cell):
+        if cell.rightWall is not None:
+            cell.rightWall.size.y += FLOOR_THICKNESS
+            cell.rightWall.calculate_initial_matrix()
+
+        if cell.bottomWall is not None:
+            cell.bottomWall.size.y += FLOOR_THICKNESS
+            cell.bottomWall.calculate_initial_matrix()
+
         cell.ceiling = None
 
     def _remove_wall(self, from_cell, to_cell):
