@@ -107,11 +107,9 @@ class ModelMatrix:
         return ret_str
 
 
-
 # The ViewMatrix class holds the camera's coordinate frame and
 # set's up a transformation concerning the camera's position
 # and orientation
-
 class ViewMatrix:
     def __init__(self):
         self.eye = Point(0, 0, 0)

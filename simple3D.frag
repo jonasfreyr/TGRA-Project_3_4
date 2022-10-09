@@ -17,11 +17,11 @@ varying vec4 normal_normal;
 void main(void)
 {
     // Diffuse
-    float lambert = max(dot(normal_normal, normalize(s)), 0.0);
+    float lambert = max(dot(normal_normal, s), 0.0);
 	vec4 diffuse_color = lambert * u_light_diffuse * u_material_diffuse;
 
     // Specular
-    float phong = max(dot(normal_normal, normalize(h)), 0.0);
+    float phong = max(dot(normal_normal, h), 0.0);
 	vec4 specular_color = pow(phong, u_shininess) * u_light_specular * u_material_specular;
 
     // Ambient

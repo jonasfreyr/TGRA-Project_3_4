@@ -37,13 +37,13 @@ void main(void)
 	normal_normal = normalize(normal);
 
 	// Diffuse
-	s = u_light_position - position;
+	s = normalize(u_light_position - position);
 	// float lambert = max(dot(normal_normal, normalize(s)), 0.0);
 	// vec4 diffuse_color = lambert * u_light_diffuse * u_material_diffuse;
 
 	// Specular
-	vec4 v = u_camera_position - position;
-	h = s + v;
+	vec4 v = normalize(u_camera_position - position);
+	h = normalize(s + v);
 	// float phong = max(dot(normal_normal, normalize(h)), 0.0);
 	// vec4 specular_color = pow(phong, u_shininess) * u_light_specular * u_material_specular;
 

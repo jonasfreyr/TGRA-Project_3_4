@@ -84,6 +84,18 @@ class Vector:
         self.x = px
         self.z = pz
 
+    def rotate2dXAxis(self, angle):
+        rad = math.radians(angle)
+
+        cs = math.cos(rad)
+        sn = math.sin(rad)
+
+        py = self.y * cs - self.z * sn
+        pz = self.y * sn + self.z * cs
+
+        self.y = py
+        self.z = pz
+
     def rotate2dReturn(self, angle):
         rad = math.radians(angle)
 
@@ -94,6 +106,7 @@ class Vector:
         pz = self.x * sn + self.z * cs
 
         return Vector(px, self.y, pz)
+
 
 class BaseCube:
     SHADER = None

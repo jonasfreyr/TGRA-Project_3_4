@@ -82,7 +82,8 @@ class Player:
     def __init__(self, x, y, z, height, radius, shader):
         self.pos = Vector(x, y, z)
         self.shader = shader
-        self.rotation = 180
+        self.rotation = 0
+        self.y_rotation = 0
         self.radius = radius
         self.height = height
 
@@ -94,9 +95,6 @@ class Player:
 
         self.shader.set_view_matrix(self.view_matrix.get_matrix())
         self.shader.set_projection_matrix(self.projection_matrix.get_matrix())
-
-        self.__last_pos = self.pos.copy()
-        self.__last_rotation = 0
 
         self.__landed = True
 
@@ -127,8 +125,18 @@ class Player:
     def update(self, keys, colliders, delta_time):
         if keys[K_LEFT]:
             self.rotation -= PLAYER_LOOK_SPEED * delta_time
+            # self.look_pos.x -= PLAYER_LOOK_SPEED * delta_time
         elif keys[K_RIGHT]:
             self.rotation += PLAYER_LOOK_SPEED * delta_time
+            # self.look_pos.x += PLAYER_LOOK_SPEED * delta_time
+
+        if keys[K_UP]:
+            self.y_rotation += PLAYER_LOOK_SPEED * delta_time
+            if self.y_rotation >= 45: self.y_rotation = 45
+
+        elif keys[K_DOWN]:
+            self.y_rotation -= PLAYER_LOOK_SPEED * delta_time
+            if self.y_rotation <= -45: self.y_rotation = -45
 
         move_vec = Vector(0, 0, 0)
 
@@ -173,18 +181,24 @@ class Player:
 
     def update_player_camera(self):
         # move_pos = self.pos.rotate2dReturn(-self.rotation) - self.__last_pos.rotate2dReturn(-self.rotation)
-        move_rotate = self.rotation - self.__last_rotation
+        # move_rotate = self.rotation - self.__last_rotation
 
         # self.view_matrix.slide(move_pos.x, move_pos.y, move_pos.z)
 
         temp = self.pos.copy()
         temp.y += self.height
-        self.view_matrix.eye = temp
+        # self.view_matrix.eye = temp
 
-        self.view_matrix.yaw(move_rotate)
+        look_pos = Vector(0, 0, -1)
 
-        self.__last_pos = self.pos.copy()
-        self.__last_rotation = self.rotation
+        look_pos.rotate2dXAxis(self.y_rotation)
+        look_pos.rotate2d(self.rotation)
+
+        self.view_matrix.look(temp, temp + look_pos, Vector(0, 1, 0))
+
+        # self.view_matrix.yaw(move_rotate)
+
+        # self.__last_rotation = self.rotation
 
     def draw(self):
         self.shader.set_camera_position(self.pos.x, self.pos.y, self.pos.z)

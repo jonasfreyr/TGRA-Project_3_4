@@ -75,9 +75,14 @@ class GraphicsProgram3D:
         last_goal = self.start_point
         for level in range(MAZE_LEVELS):
             last_goal = self.generate_map(last_goal, level)
-            self.moving_cubes.append(MovingCube(last_goal.pixel_X + WALL_THICKNESS, last_goal.pixel_Y, last_goal.pixel_Z + WALL_THICKNESS, CELL_SIZE - WALL_THICKNESS, ELEVATOR_THICKNESS, CELL_SIZE - WALL_THICKNESS, BLUE_COLOR, Vector(last_goal.pixel_X + WALL_THICKNESS, last_goal.pixel_Y + WALL_HEIGHT + FLOOR_THICKNESS, last_goal.pixel_Z + WALL_THICKNESS), 0.1))
+            elevator = MovingCube(last_goal.pixel_X + WALL_THICKNESS, last_goal.pixel_Y, last_goal.pixel_Z + WALL_THICKNESS,
+                       CELL_SIZE - WALL_THICKNESS, ELEVATOR_THICKNESS, CELL_SIZE - WALL_THICKNESS, BLUE_COLOR,
+                       Vector(last_goal.pixel_X + WALL_THICKNESS, last_goal.pixel_Y + WALL_HEIGHT + FLOOR_THICKNESS,
+                              last_goal.pixel_Z + WALL_THICKNESS), 0.1)
 
-            self._remove_ceiling(last_goal)
+            self._remove_ceiling(last_goal, elevator)
+
+            self.moving_cubes.append(elevator)
             if last_goal.cell_Y < MAZE_LEVELS-1:
                 last_goal = self.cells[level+1][last_goal.cell_X][last_goal.cell_Z]
                 self.goal_points.add(last_goal)
@@ -88,14 +93,22 @@ class GraphicsProgram3D:
 
         self.moving_cubes.append(Reward(x, y, z, 0.3, GOLD_COLOR, 0.1))
 
-    def _remove_ceiling(self, cell):
+    def _remove_ceiling(self, cell, elevator):
         if cell.rightWall is not None:
             cell.rightWall.size.y += FLOOR_THICKNESS
             cell.rightWall.calculate_initial_matrix()
 
+        else:
+            elevator.pos.x -= WALL_THICKNESS
+            elevator.size.x += WALL_THICKNESS
+
         if cell.bottomWall is not None:
             cell.bottomWall.size.y += FLOOR_THICKNESS
             cell.bottomWall.calculate_initial_matrix()
+
+        else:
+            elevator.pos.z -= WALL_THICKNESS
+            elevator.size.z += WALL_THICKNESS
 
         cell.ceiling = None
 
@@ -271,7 +284,6 @@ class GraphicsProgram3D:
         glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
 
         self.light.pos = self.player.top_pos
-
         self.light.draw()
 
         self.player.draw()
