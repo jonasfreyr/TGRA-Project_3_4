@@ -45,16 +45,17 @@ class GraphicsProgram3D:
 
         model_matrix = ModelMatrix()
 
-        Cube(0, 0, 0, 0, 0, 0, WHITE_COLOR).init_openGL(self.shader, model_matrix)
+        Cube(0, 0, 0, 0, 0, 0, WALL_COLOR).init_openGL(self.shader, model_matrix)
 
     def init_objects(self):
         self.walls = []
-        self.walls.append(Cube(0, -1, 0, 100, 1, 100, GREEN_COLOR))
 
         self.player = Player(1, 0, 1, 0.5, 0.2, self.shader)
 
-        light_color = Color(0.5, 0.5, 0.5, 0, 2)
-        self.light = Light(MAZE_WIDTH * CELL_SIZE, 30, MAZE_DEPTH * CELL_SIZE, light_color, self.shader)
+        self.lights = []
+
+        # self.lights.append(Light(MAZE_WIDTH * CELL_SIZE, 30, MAZE_DEPTH * CELL_SIZE, light_color, self.shader))
+        # self.lights.append(Light(MAZE_WIDTH * CELL_SIZE, 30, MAZE_DEPTH * CELL_SIZE, Color(0.5, 0, 0, 0, 2), self.shader))
 
         # self.walls.append(Cube(10, 0, 10, 20, 4, 1, (0, 1, 0)))
         # self.walls.append(Cube(10, 0, 20, 20, 4, 1, (1, 0, 0)))
@@ -72,45 +73,75 @@ class GraphicsProgram3D:
 
         self.player.pos = Vector(self.start_point.pixel_X + CELL_SIZE / 2, 0, self.start_point.pixel_Z + CELL_SIZE / 2)
 
+        # self.player.pos.y = MAZE_LEVELS * WALL_HEIGHT + 0.5
+
+        # self.player.pos.x = 50
+        # self.player.pos.z = 50
+        # self.base_cube = BaseCube
+
         last_goal = self.start_point
         for level in range(MAZE_LEVELS):
             last_goal = self.generate_map(last_goal, level)
-            elevator = MovingCube(last_goal.pixel_X + WALL_THICKNESS, last_goal.pixel_Y, last_goal.pixel_Z + WALL_THICKNESS,
-                       CELL_SIZE - WALL_THICKNESS, ELEVATOR_THICKNESS, CELL_SIZE - WALL_THICKNESS, BLUE_COLOR,
-                       Vector(last_goal.pixel_X + WALL_THICKNESS, last_goal.pixel_Y + WALL_HEIGHT + FLOOR_THICKNESS,
-                              last_goal.pixel_Z + WALL_THICKNESS), 0.1)
 
-            self._remove_ceiling(last_goal, elevator)
+            posx, posz, sizex, sizez = self._remove_ceiling(last_goal)
+
+            # print("After:", elevator.pos)
+
+            elevator = MovingCube(posx, last_goal.pixel_Y, posz,
+                       sizex, ELEVATOR_THICKNESS, sizez, ELEVATOR_COLOR,
+                       Vector(posx, last_goal.pixel_Y + WALL_HEIGHT + FLOOR_THICKNESS,
+                              posz), 0.1)
 
             self.moving_cubes.append(elevator)
             if last_goal.cell_Y < MAZE_LEVELS-1:
                 last_goal = self.cells[level+1][last_goal.cell_X][last_goal.cell_Z]
                 self.goal_points.add(last_goal)
 
+        for left in range(MAZE_DEPTH):
+            for level in range(MAZE_LEVELS):
+                self.walls.append(Cube(left * CELL_SIZE, (level * WALL_HEIGHT) + (FLOOR_THICKNESS * level), MAZE_DEPTH * CELL_SIZE, CELL_SIZE, WALL_HEIGHT + FLOOR_THICKNESS, WALL_THICKNESS, WALL_COLOR))
+
+        for top in range(MAZE_WIDTH):
+            for level in range(MAZE_LEVELS):
+                self.walls.append(Cube(MAZE_WIDTH * CELL_SIZE, (level * WALL_HEIGHT) + (FLOOR_THICKNESS * level), top * CELL_SIZE, WALL_THICKNESS, WALL_HEIGHT + FLOOR_THICKNESS,  CELL_SIZE, WALL_COLOR))
+
+        for x in range(MAZE_WIDTH):
+            for z in range(MAZE_DEPTH):
+                self.walls.append(Cube(x * CELL_SIZE, -1, z * CELL_SIZE, CELL_SIZE, 1, CELL_SIZE, FLOOR_COLOR))
+
         x = random.randint(0, MAZE_WIDTH * CELL_SIZE)
         z = random.randint(0, MAZE_DEPTH * CELL_SIZE)
         y = MAZE_LEVELS * WALL_HEIGHT + FLOOR_THICKNESS + WALL_HEIGHT / 2
 
-        self.moving_cubes.append(Reward(x, y, z, 0.3, GOLD_COLOR, 0.1))
+        self.reward = Reward(x, y, z, 0.3, REWARD_COLOR, 0.1)
+        self.moving_cubes.append(self.reward)
 
-    def _remove_ceiling(self, cell, elevator):
+    def _remove_ceiling(self, cell):
+        posx = cell.pixel_X + WALL_THICKNESS
+        posz = cell.pixel_Z + WALL_THICKNESS
+
+        sizex = CELL_SIZE - WALL_THICKNESS
+        sizez = CELL_SIZE - WALL_THICKNESS
+
         if cell.rightWall is not None:
             cell.rightWall.size.y += FLOOR_THICKNESS
             cell.rightWall.calculate_initial_matrix()
 
         else:
-            elevator.pos.x -= WALL_THICKNESS
-            elevator.size.x += WALL_THICKNESS
+            posx -= WALL_THICKNESS
+            sizex += WALL_THICKNESS
 
         if cell.bottomWall is not None:
             cell.bottomWall.size.y += FLOOR_THICKNESS
             cell.bottomWall.calculate_initial_matrix()
 
         else:
-            elevator.pos.z -= WALL_THICKNESS
-            elevator.size.z += WALL_THICKNESS
+            posz -= WALL_THICKNESS
+            sizez += WALL_THICKNESS
 
         cell.ceiling = None
+
+        return posx, posz, sizex, sizez
 
     def _remove_wall(self, from_cell, to_cell):
         from_x = from_cell.cell_X
@@ -162,9 +193,7 @@ class GraphicsProgram3D:
         self.goal_points.add(goal_point)
 
         self.make_maze(start, goal_point, self.cells, level)
-
-        self.walls.append(Cube(0, 0, MAZE_DEPTH * CELL_SIZE, MAZE_WIDTH * CELL_SIZE, WALL_HEIGHT * MAZE_LEVELS + FLOOR_THICKNESS * MAZE_LEVELS, WALL_THICKNESS, WHITE_COLOR))
-        self.walls.append(Cube(MAZE_WIDTH * CELL_SIZE, 0, 0, WALL_THICKNESS, WALL_HEIGHT * MAZE_LEVELS + FLOOR_THICKNESS * MAZE_LEVELS, MAZE_DEPTH * CELL_SIZE + WALL_THICKNESS, WHITE_COLOR))
+        # self.walls.append(Cube(50, 1, 50, 1, 1, 1, WHITE_COLOR))
 
         return goal_point
 
@@ -283,8 +312,28 @@ class GraphicsProgram3D:
 
         glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
 
-        self.light.pos = self.player.top_pos
-        self.light.draw()
+        # self.lights[0].pos = self.player.top_pos
+
+        lights = []
+
+        pos = self.player.top_pos
+        c = Color(0.2, 0.2, 0.2, 0, 2)
+
+        c.mat_specular = Vector(1, 1, 1)
+
+        lights.append(Light(pos.x, pos.y, pos.z, c, self.shader))
+
+        if self.player.top_pos.y // WALL_HEIGHT >= MAZE_LEVELS and not self.reward.collected: lights.append(self.reward.light)
+
+        for elevator in self.moving_cubes:
+            if self.player.top_pos.y // WALL_HEIGHT == (elevator.start_point.y // WALL_HEIGHT)-1:
+                lights.append(elevator.light_1)
+                lights.append(elevator.light_2)
+
+        Light(0, 0, 0, Color(0, 0, 0, 0, 1), self.shader).reset()
+
+        for i, light in enumerate(lights):
+            light.draw(i)
 
         self.player.draw()
 

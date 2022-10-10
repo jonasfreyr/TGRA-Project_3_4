@@ -29,7 +29,10 @@ class Shader3D:
         self.renderingProgramID = glCreateProgram()
         glAttachShader(self.renderingProgramID, vert_shader)
         glAttachShader(self.renderingProgramID, frag_shader)
-        glLinkProgram(self.renderingProgramID)
+        result = glLinkProgram(self.renderingProgramID)
+        if (result != 1):
+            print("Couldn't link program\nProgram link Log:\n" + str(glGetProgramInfoLog(self.renderingProgramID)))
+
 
         self.positionLoc			= glGetAttribLocation(self.renderingProgramID, "a_position")
         glEnableVertexAttribArray(self.positionLoc)
@@ -45,18 +48,20 @@ class Shader3D:
         self.projectionMatrixLoc = glGetUniformLocation(self.renderingProgramID, "u_projection_matrix")
         self.viewMatrixLoc = glGetUniformLocation(self.renderingProgramID, "u_view_matrix")
 
+        self.numOfLightsLoc = glGetUniformLocation(self.renderingProgramID, "u_NUM_OF_LIGHTS")
+
         # self.colorLoc = glGetUniformLocation(self.renderingProgramID, "u_color")
 
-        self.lightPosLoc = glGetUniformLocation(self.renderingProgramID, "u_light_position")
-        self.lightDifLoc = glGetUniformLocation(self.renderingProgramID, "u_light_diffuse")
+        # self.lightPosLoc = glGetUniformLocation(self.renderingProgramID, "u_light_positions")
+        # self.lightDifLoc = glGetUniformLocation(self.renderingProgramID, "u_light_diffuse")
         self.matDifLoc = glGetUniformLocation(self.renderingProgramID, "u_material_diffuse")
 
         self.cameraPosLoc = glGetUniformLocation(self.renderingProgramID, "u_camera_position")
-        self.lightSpecLoc = glGetUniformLocation(self.renderingProgramID, "u_light_specular")
+        # self.lightSpecLoc = glGetUniformLocation(self.renderingProgramID, "u_light_specular")
         self.matSpecLoc = glGetUniformLocation(self.renderingProgramID, "u_material_specular")
         self.shininessLoc = glGetUniformLocation(self.renderingProgramID, "u_shininess")
 
-        self.lightAmbientLoc = glGetUniformLocation(self.renderingProgramID, "u_light_ambient")
+        # self.lightAmbientLoc = glGetUniformLocation(self.renderingProgramID, "u_light_ambient")
         self.matAmbientLoc = glGetUniformLocation(self.renderingProgramID, "u_material_ambient")
 
     def use(self):
@@ -83,31 +88,35 @@ class Shader3D:
         glVertexAttribPointer(self.normalLoc, 3, GL_FLOAT, False, 0, vertex_array)
 
     ## Diffuse
-    def set_light_position(self, x, y, z):
-        glUniform4f(self.lightPosLoc, x, y, z, 0.0)
+    def set_light_position(self, x, y, z, i):
+        loc = glGetUniformLocation(self.renderingProgramID, f"u_light_positions[{i}]")
+        glUniform4f(loc, x, y, z, 1.0)
 
     def set_material_diffuse(self, r, g, b):
-        glUniform4f(self.matDifLoc, r, g, b, 1.0)
+        glUniform4f(self.matDifLoc, r, g, b, 0.0)
 
-    def set_light_diffuse(self, r, g, b):
-        glUniform4f(self.lightDifLoc, r, g, b, 1.0)
+    def set_light_diffuse(self, r, g, b, i):
+        loc = glGetUniformLocation(self.renderingProgramID, f"u_light_diffuses[{i}]")
+        glUniform4f(loc, r, g, b, 0.0)
 
     ## Specular
     def set_camera_position(self, x, y, z):
-        glUniform4f(self.cameraPosLoc, x, y, z, 0.0)
+        glUniform4f(self.cameraPosLoc, x, y, z, 1.0)
 
-    def set_light_specular(self, r, g, b):
-        glUniform4f(self.lightSpecLoc, r, g, b, 1.0)
+    def set_light_specular(self, r, g, b, i):
+        loc = glGetUniformLocation(self.renderingProgramID, f"u_light_speculars[{i}]")
+        glUniform4f(loc, r, g, b, 0.0)
 
     def set_material_specular(self, r, g, b):
-        glUniform4f(self.matSpecLoc, r, g, b, 1.0)
+        glUniform4f(self.matSpecLoc, r, g, b, 0.0)
 
     def set_shininess(self, shininess):
         glUniform1f(self.shininessLoc, shininess)
 
     ## Ambient
-    def set_light_ambient(self, r, g, b):
-        glUniform4f(self.lightAmbientLoc, r, g, b, 1.0)
+    def set_light_ambient(self, r, g, b, i):
+        loc = glGetUniformLocation(self.renderingProgramID, f"u_light_ambients[{i}]")
+        glUniform4f(loc, r, g, b, 0.0)
 
     def set_material_ambient(self, r, g, b):
-        glUniform4f(self.matAmbientLoc, r, g, b, 1.0)
+        glUniform4f(self.matAmbientLoc, r, g, b, 0.0)

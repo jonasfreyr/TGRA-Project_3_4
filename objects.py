@@ -1,3 +1,5 @@
+import random
+
 from pygame.locals import *
 
 from Matrices import *
@@ -15,11 +17,11 @@ class Cell:
         self.pixel_Y = (y * WALL_HEIGHT) + (FLOOR_THICKNESS * y)
 
         self.bottomWall = Cube(self.pixel_X, self.pixel_Y, self.pixel_Z, CELL_SIZE,
-                               WALL_HEIGHT, WALL_THICKNESS, WHITE_COLOR)
+                               WALL_HEIGHT, WALL_THICKNESS, WALL_COLOR)
         self.rightWall = Cube(self.pixel_X, self.pixel_Y, self.pixel_Z, WALL_THICKNESS,
-                              WALL_HEIGHT, CELL_SIZE, WHITE_COLOR)
+                              WALL_HEIGHT, CELL_SIZE, WALL_COLOR)
         self.ceiling = Cube(self.pixel_X, self.pixel_Y + WALL_HEIGHT, self.pixel_Z, CELL_SIZE,
-                            FLOOR_THICKNESS, CELL_SIZE, GREEN_COLOR)
+                            FLOOR_THICKNESS, CELL_SIZE, FLOOR_COLOR)
 
         self.visited = False
 
@@ -107,6 +109,14 @@ class Player:
 
         return temp
 
+    @property
+    def behind_top_pos(self):
+        pos = self.top_pos
+
+        look_pos = Vector(0, 0, 1)
+        look_pos.rotate2d(self.rotation)
+
+        return pos
     def collision(self, cubes, pos):
         for box in cubes:
             closest_pos, move_vec = box.collide(pos, self.radius)
@@ -201,7 +211,8 @@ class Player:
         # self.__last_rotation = self.rotation
 
     def draw(self):
-        self.shader.set_camera_position(self.pos.x, self.pos.y, self.pos.z)
+        temp = self.view_matrix.eye
+        self.shader.set_camera_position(temp.x, temp.y, temp.z)
         self.shader.set_view_matrix(self.view_matrix.get_matrix())
 
 
@@ -215,11 +226,15 @@ class Light:
     def pos_array(self):
         return self.pos.x, self.pos.y, self.pos.z
 
-    def draw(self):
-        self.shader.set_light_position(*self.pos_array)
-        self.shader.set_light_diffuse(*self.color.diffuse)
-        self.shader.set_light_specular(*self.color.specular)
-        self.shader.set_light_ambient(*self.color.ambient)
+    def reset(self):
+        for i in range(MAX_NUM_OF_LIGHTS):
+            self.draw(i)
+
+    def draw(self, i):
+        self.shader.set_light_position(*self.pos_array, i)
+        self.shader.set_light_diffuse(*self.color.diffuse, i)
+        self.shader.set_light_specular(*self.color.specular, i)
+        self.shader.set_light_ambient(*self.color.ambient, i)
 
 
 class Color:
@@ -314,6 +329,9 @@ class MovingCube(Cube):
         self.end_point = end
         self.speed = speed
 
+        self.light_1 = Light(self.pos.x + width / 2, self.pos.y + height / 2 + 0.2, self.pos.z + depth / 2, ELEVATOR_COLOR, BaseCube.SHADER)
+        self.light_2 = Light(self.pos.x + width / 2, self.pos.y + height / 2 - 0.2, self.pos.z + depth / 2, ELEVATOR_COLOR, BaseCube.SHADER)
+
         self.moving_to_end = True
 
     def update(self, delta_time):
@@ -335,6 +353,9 @@ class MovingCube(Cube):
 
             # print(self.collider.pos)
 
+        self.light_1.y = self.pos.y + self.size.y / 2 + 0.2
+        self.light_2.y = self.pos.y + self.size.y / 2 - 0.2
+
     def draw(self):
         self.calculate_initial_matrix()
 
@@ -349,6 +370,8 @@ class Reward(MovingCube):
         self.rotation = Vector(90, 45, 45)
 
         self.collected = False
+
+        self.light = Light(x, y + size*2, z, REWARD_COLOR, BaseCube.SHADER)
 
     def update(self, delta_time):
         self.rotation.z += REWARD_ROTATION_SPEED * delta_time
@@ -367,8 +390,15 @@ class Reward(MovingCube):
         if not self.collected:
             super(Reward, self).draw()
 
-WHITE_COLOR = Color(1, 1, 1, 100, 10)
-GREEN_COLOR = Color(0, 0.5, 0, 100, 10)
-BLUE_COLOR = Color(0, 0, 1, 100, 10)
-RED_COLOR = Color(1, 0, 0, 100, 10)
-GOLD_COLOR = Color(4, 4, 0, 2, 10)
+
+WALL_COLOR = Color(1, 1, 1, 10, 10)
+WALL_COLOR.mat_specular = Vector(0.05, 0.05, 0.05)
+
+FLOOR_COLOR = Color(0, 1, 0, 100, 10)
+FLOOR_COLOR.mat_specular = Vector(0, 0, 0)
+
+ELEVATOR_COLOR = Color(0, 0, 1, 100, 10)
+ELEVATOR_COLOR.mat_specular = Vector(0.1, 0.1, 0.1)
+
+REWARD_COLOR = Color(0.1, 0.1, 0, 10, 10)
+REWARD_COLOR.mat_specular = Vector(1, 1, 0)
