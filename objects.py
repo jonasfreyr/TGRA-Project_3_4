@@ -329,9 +329,6 @@ class MovingCube(Cube):
         self.end_point = end
         self.speed = speed
 
-        self.light_1 = Light(self.pos.x + width / 2, self.pos.y + height / 2 + 0.2, self.pos.z + depth / 2, ELEVATOR_COLOR, BaseCube.SHADER)
-        self.light_2 = Light(self.pos.x + width / 2, self.pos.y + height / 2 - 0.2, self.pos.z + depth / 2, ELEVATOR_COLOR, BaseCube.SHADER)
-
         self.moving_to_end = True
 
     def update(self, delta_time):
@@ -352,9 +349,6 @@ class MovingCube(Cube):
             self.collider.pos = self.pos
 
             # print(self.collider.pos)
-
-        self.light_1.y = self.pos.y + self.size.y / 2 + 0.2
-        self.light_2.y = self.pos.y + self.size.y / 2 - 0.2
 
     def draw(self):
         self.calculate_initial_matrix()

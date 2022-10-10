@@ -93,6 +93,9 @@ class GraphicsProgram3D:
                               posz), 0.1)
 
             self.moving_cubes.append(elevator)
+
+            self.lights.append(Light(posx + CELL_SIZE / 2, last_goal.pixel_Y + WALL_HEIGHT / 2, posz + CELL_SIZE / 2, ELEVATOR_COLOR, self.shader))
+
             if last_goal.cell_Y < MAZE_LEVELS-1:
                 last_goal = self.cells[level+1][last_goal.cell_X][last_goal.cell_Z]
                 self.goal_points.add(last_goal)
@@ -325,13 +328,11 @@ class GraphicsProgram3D:
 
         if self.player.top_pos.y // WALL_HEIGHT >= MAZE_LEVELS and not self.reward.collected: lights.append(self.reward.light)
 
-        for elevator in self.moving_cubes:
-            if self.player.top_pos.y // WALL_HEIGHT == (elevator.start_point.y // WALL_HEIGHT)-1:
-                lights.append(elevator.light_1)
-                lights.append(elevator.light_2)
+        for light in self.lights:
+            if light.pos.y // WALL_HEIGHT == self.player.top_pos.y // WALL_HEIGHT:
+                lights.append(light)
 
         Light(0, 0, 0, Color(0, 0, 0, 0, 1), self.shader).reset()
-
         for i, light in enumerate(lights):
             light.draw(i)
 
