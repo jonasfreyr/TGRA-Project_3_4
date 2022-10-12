@@ -77,7 +77,7 @@ class GraphicsProgram3D:
 
         self.player.pos = Vector(self.start_point.pixel_X + CELL_SIZE / 2, 0, self.start_point.pixel_Z + CELL_SIZE / 2)
 
-        self.player.pos.y = MAZE_LEVELS * WALL_HEIGHT + 0.5
+        # self.player.pos.y = MAZE_LEVELS * WALL_HEIGHT + 0.5
 
         # self.player.pos.x = 50
         # self.player.pos.z = 50
