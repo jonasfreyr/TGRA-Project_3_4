@@ -31,7 +31,7 @@ void main(void)
 
         // Specular
         phong = max(dot(normalize(normal_normal), normalize(lights_h[i])), 0.0);
-        specular_color = pow(phong, u_shininess) * u_light_speculars[i] * u_material_specular;
+        specular_color =  u_material_specular * u_light_speculars[i] * pow(phong, u_shininess);
 
         // Ambient
         ambient_color = u_light_ambients[i] * u_material_ambient;

@@ -272,7 +272,6 @@ class Cube(BaseCube):
     def calculate_initial_matrix(self):
         if BaseCube.MODEL:
             BaseCube.MODEL.push_matrix()
-            BaseCube.MODEL.load_identity()
             BaseCube.MODEL.add_translation(self.pos.x + self.size.x / 2, self.pos.y + self.size.y / 2,
                                            self.pos.z + self.size.z / 2)
             BaseCube.MODEL.add_scale(self.size.x, self.size.y, self.size.z)
@@ -329,6 +328,9 @@ class MovingCube(Cube):
         self.end_point = end
         self.speed = speed
 
+        self.light = Light(x + CELL_SIZE / 2, y + WALL_HEIGHT / 2, z + CELL_SIZE / 2, ELEVATOR_COLOR,
+                  BaseCube.SHADER)
+
         self.moving_to_end = True
 
     def update(self, delta_time):
@@ -356,33 +358,73 @@ class MovingCube(Cube):
         super(MovingCube, self).draw()
 
 
-class Reward(MovingCube):
+class Reward(BaseSphere):
     def __init__(self, x, y, z, size, color, bobbing_speed):
-        end_point = Vector(x, y + size, z)
-        super(Reward, self).__init__(x, y, z, size / 2, size, size / 2, color, end_point, bobbing_speed)
 
-        self.rotation = Vector(90, 45, 45)
+        self.pos = Vector(x, y, z)
+        self.start_point = Vector(x, y, z)
+        self.end_point = Vector(x, y + size*2, z)
+        self.rotation = Vector(0, 0, 0)
+        self.speed = bobbing_speed
+
+        self.size = size
+
+        self.color = color
 
         self.collected = False
+        self.moving_to_end = True
 
-        self.light = Light(x, y + size*2, z, REWARD_COLOR, BaseCube.SHADER)
+        self.light = Light(x, y - size*2, z, REWARD_COLOR, BaseCube.SHADER)
+
+        super(Reward, self).__init__()
 
     def update(self, delta_time):
         self.rotation.z += REWARD_ROTATION_SPEED * delta_time
         self.rotation.x += REWARD_ROTATION_SPEED * delta_time
         self.rotation.y += REWARD_ROTATION_SPEED * delta_time
-        super(Reward, self).update(delta_time)
+
+        going_to_point = self.start_point
+
+        if self.moving_to_end:
+            going_to_point = self.end_point
+
+        dist_vec = going_to_point - self.pos
+
+        if dist_vec.__len__() <= 0.01:
+            self.moving_to_end = not self.moving_to_end
+
+        else:
+            dist_vec.normalize()
+
+            self.pos += dist_vec * self.speed * delta_time
+
+            # print(self.collider.pos)
 
     def collide(self, pos, radius):
-        _, move_vec = super(Reward, self).collide(pos, radius)
-
-        if move_vec.__len__() > 0: self.collected = True
+        if (self.pos - pos).__len__() <= radius + self.size:
+            self.collected = True
 
         return pos, Vector(0, 0, 0)
 
     def draw(self):
-        if not self.collected:
-            super(Reward, self).draw()
+        shader = BaseSphere.SHADER
+
+        # shader.set_solid_color(*self.color)
+
+        BaseSphere.MODEL.push_matrix()
+        BaseSphere.MODEL.load_identity()
+        BaseSphere.MODEL.add_translation(self.pos.x, self.pos.y, self.pos.z)
+        BaseSphere.MODEL.add_scale(self.size, self.size, self.size)
+        BaseSphere.MODEL.add_rotation(self.rotation.x, self.rotation.y, self.rotation.z)
+        shader.set_model_matrix(BaseSphere.MODEL.matrix)
+        BaseSphere.MODEL.pop_matrix()
+
+        shader.set_material_diffuse(*self.color.diffuse)
+        shader.set_material_specular(*self.color.specular)
+        shader.set_material_ambient(*self.color.ambient)
+        shader.set_shininess(self.color.shininess)
+
+        super(Reward, self).draw()
 
 
 WALL_COLOR = Color(1, 1, 1, 10, 10)

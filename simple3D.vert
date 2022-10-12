@@ -39,7 +39,7 @@ void main(void)
 	// float light_factor_2 = max(dot(normalize(normal), normalize(vec4(-3, -2, -1, 0))), 0.0);
 	// v_color = (light_factor_1 + light_factor_2) * u_color; // ### --- Change this vector (pure white) to color variable --- #####
 
-	normal_normal = normal;
+	normal_normal = normalize(normal);
 
 	vec4 s;
 	vec4 v;

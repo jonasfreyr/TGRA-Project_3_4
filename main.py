@@ -45,7 +45,11 @@ class GraphicsProgram3D:
 
         model_matrix = ModelMatrix()
 
-        Cube(0, 0, 0, 0, 0, 0, WALL_COLOR).init_openGL(self.shader, model_matrix)
+        self.init_cube = BaseCube()
+        self.init_cube.init_openGL(self.shader, model_matrix)
+
+        self.init_sphere = BaseSphere()
+        self.init_sphere.init_openGL(self.shader, model_matrix)
 
     def init_objects(self):
         self.walls = []
@@ -73,7 +77,7 @@ class GraphicsProgram3D:
 
         self.player.pos = Vector(self.start_point.pixel_X + CELL_SIZE / 2, 0, self.start_point.pixel_Z + CELL_SIZE / 2)
 
-        # self.player.pos.y = MAZE_LEVELS * WALL_HEIGHT + 0.5
+        self.player.pos.y = MAZE_LEVELS * WALL_HEIGHT + 0.5
 
         # self.player.pos.x = 50
         # self.player.pos.z = 50
@@ -88,25 +92,27 @@ class GraphicsProgram3D:
             # print("After:", elevator.pos)
 
             elevator = MovingCube(posx, last_goal.pixel_Y, posz,
-                       sizex, ELEVATOR_THICKNESS, sizez, ELEVATOR_COLOR,
-                       Vector(posx, last_goal.pixel_Y + WALL_HEIGHT + FLOOR_THICKNESS,
-                              posz), 0.1)
+                                  sizex, ELEVATOR_THICKNESS, sizez, ELEVATOR_COLOR,
+                                  Vector(posx, last_goal.pixel_Y + WALL_HEIGHT + FLOOR_THICKNESS,
+                                         posz), 0.1)
 
             self.moving_cubes.append(elevator)
 
-            self.lights.append(Light(posx + CELL_SIZE / 2, last_goal.pixel_Y + WALL_HEIGHT / 2, posz + CELL_SIZE / 2, ELEVATOR_COLOR, self.shader))
-
-            if last_goal.cell_Y < MAZE_LEVELS-1:
-                last_goal = self.cells[level+1][last_goal.cell_X][last_goal.cell_Z]
+            if last_goal.cell_Y < MAZE_LEVELS - 1:
+                last_goal = self.cells[level + 1][last_goal.cell_X][last_goal.cell_Z]
                 self.goal_points.add(last_goal)
 
         for left in range(MAZE_DEPTH):
             for level in range(MAZE_LEVELS):
-                self.walls.append(Cube(left * CELL_SIZE, (level * WALL_HEIGHT) + (FLOOR_THICKNESS * level), MAZE_DEPTH * CELL_SIZE, CELL_SIZE, WALL_HEIGHT + FLOOR_THICKNESS, WALL_THICKNESS, WALL_COLOR))
+                self.walls.append(
+                    Cube(left * CELL_SIZE, (level * WALL_HEIGHT) + (FLOOR_THICKNESS * level), MAZE_DEPTH * CELL_SIZE,
+                         CELL_SIZE, WALL_HEIGHT + FLOOR_THICKNESS, WALL_THICKNESS, WALL_COLOR))
 
         for top in range(MAZE_WIDTH):
             for level in range(MAZE_LEVELS):
-                self.walls.append(Cube(MAZE_WIDTH * CELL_SIZE, (level * WALL_HEIGHT) + (FLOOR_THICKNESS * level), top * CELL_SIZE, WALL_THICKNESS, WALL_HEIGHT + FLOOR_THICKNESS,  CELL_SIZE, WALL_COLOR))
+                self.walls.append(
+                    Cube(MAZE_WIDTH * CELL_SIZE, (level * WALL_HEIGHT) + (FLOOR_THICKNESS * level), top * CELL_SIZE,
+                         WALL_THICKNESS, WALL_HEIGHT + FLOOR_THICKNESS, CELL_SIZE, WALL_COLOR))
 
         for x in range(MAZE_WIDTH):
             for z in range(MAZE_DEPTH):
@@ -114,10 +120,10 @@ class GraphicsProgram3D:
 
         x = random.randint(0, MAZE_WIDTH * CELL_SIZE)
         z = random.randint(0, MAZE_DEPTH * CELL_SIZE)
-        y = MAZE_LEVELS * WALL_HEIGHT + FLOOR_THICKNESS + WALL_HEIGHT / 2
+        y = MAZE_LEVELS * WALL_HEIGHT + FLOOR_THICKNESS * MAZE_LEVELS + WALL_HEIGHT / 2
 
-        self.reward = Reward(x, y, z, 0.3, REWARD_COLOR, 0.1)
-        self.moving_cubes.append(self.reward)
+        self.reward = Reward(x, y, z, 0.1, REWARD_COLOR, 0.1)
+        # self.moving_cubes.append(self.reward)
 
     def _remove_ceiling(self, cell):
         posx = cell.pixel_X + WALL_THICKNESS
@@ -173,12 +179,12 @@ class GraphicsProgram3D:
         neighbors = []
         if x > 0:
             neighbors.append(cells[level][x - 1][z])
-        if x < MAZE_WIDTH-1:
+        if x < MAZE_WIDTH - 1:
             neighbors.append(cells[level][x + 1][z])
 
         if z > 0:
             neighbors.append(cells[level][x][z - 1])
-        if z < MAZE_DEPTH-1:
+        if z < MAZE_DEPTH - 1:
             neighbors.append(cells[level][x][z + 1])
 
         random.shuffle(neighbors)
@@ -189,9 +195,9 @@ class GraphicsProgram3D:
                 self.make_maze(cell, goal_cell, cells, level)
 
     def generate_map(self, start, level):
-        goal_point = self.cells[level][random.randint(0, MAZE_WIDTH-1)][random.randint(0, MAZE_DEPTH-1)]
+        goal_point = self.cells[level][random.randint(0, MAZE_WIDTH - 1)][random.randint(0, MAZE_DEPTH - 1)]
         while goal_point in self.goal_points:
-            goal_point = self.cells[level][random.randint(0, MAZE_WIDTH-1)][random.randint(0, MAZE_DEPTH-1)]
+            goal_point = self.cells[level][random.randint(0, MAZE_WIDTH - 1)][random.randint(0, MAZE_DEPTH - 1)]
 
         self.goal_points.add(goal_point)
 
@@ -211,21 +217,21 @@ class GraphicsProgram3D:
             walls.append(cell.ceiling)
 
         # Left
-        if cell.cell_X < MAZE_WIDTH-1:
+        if cell.cell_X < MAZE_WIDTH - 1:
             wall = self.cells[cell.cell_Y][cell.cell_X + 1][cell.cell_Z].rightWall
             wall2 = self.cells[cell.cell_Y][cell.cell_X + 1][cell.cell_Z].bottomWall
             if wall: walls.append(wall)
             if wall2: walls.append(wall2)
 
         # Above
-        if cell.cell_Z < MAZE_DEPTH-1:
+        if cell.cell_Z < MAZE_DEPTH - 1:
             wall = self.cells[cell.cell_Y][cell.cell_X][cell.cell_Z + 1].bottomWall
             wall2 = self.cells[cell.cell_Y][cell.cell_X][cell.cell_Z + 1].rightWall
             if wall: walls.append(wall)
             if wall2: walls.append(wall2)
 
         # Above to the left
-        if cell.cell_X < MAZE_WIDTH-1 and cell.cell_Z < MAZE_DEPTH-1:
+        if cell.cell_X < MAZE_WIDTH - 1 and cell.cell_Z < MAZE_DEPTH - 1:
             wall = self.cells[cell.cell_Y][cell.cell_X + 1][cell.cell_Z + 1].bottomWall
             wall2 = self.cells[cell.cell_Y][cell.cell_X + 1][cell.cell_Z + 1].rightWall
             if wall: walls.append(wall)
@@ -237,18 +243,18 @@ class GraphicsProgram3D:
             if wall: walls.append(wall)
 
         # Bottom to the left
-        if cell.cell_Z > 0 and cell.cell_X < MAZE_WIDTH-1:
+        if cell.cell_Z > 0 and cell.cell_X < MAZE_WIDTH - 1:
             wall = self.cells[cell.cell_Y][cell.cell_X + 1][cell.cell_Z - 1].rightWall
             if wall: walls.append(wall)
 
         # Right
         if cell.cell_X > 0:
-            wall = self.cells[cell.cell_Y][cell.cell_X-1][cell.cell_Z].bottomWall
+            wall = self.cells[cell.cell_Y][cell.cell_X - 1][cell.cell_Z].bottomWall
             if wall: walls.append(wall)
 
         # Above to the right
-        if cell.cell_X > 0 and cell.cell_Z < MAZE_DEPTH-1:
-            wall = self.cells[cell.cell_Y][cell.cell_X-1][cell.cell_Z+1].bottomWall
+        if cell.cell_X > 0 and cell.cell_Z < MAZE_DEPTH - 1:
+            wall = self.cells[cell.cell_Y][cell.cell_X - 1][cell.cell_Z + 1].bottomWall
             if wall: walls.append(wall)
 
         return walls
@@ -259,7 +265,9 @@ class GraphicsProgram3D:
         for cube in self.moving_cubes:
             cube.update(delta_time)
 
-        colliders = [*self.walls, *self.moving_cubes]
+        self.reward.update(delta_time)
+
+        colliders = [*self.walls, *self.moving_cubes, self.reward]
 
         player_cell_x = math.floor(self.player.pos.x / CELL_SIZE)
         player_cell_z = math.floor(self.player.pos.z / CELL_SIZE)
@@ -272,16 +280,16 @@ class GraphicsProgram3D:
 
                 # Walls from the lower cell
                 if player_cell_y > 0:
-                    lower_cell = self.cells[player_cell_y-1][player_cell_x][player_cell_z]
+                    lower_cell = self.cells[player_cell_y - 1][player_cell_x][player_cell_z]
                     colliders.extend(self.get_walls_from_cell(lower_cell))
 
                 # Walls from the above cell
-                if player_cell_y < MAZE_LEVELS-1:
-                    higher_cell = self.cells[player_cell_y+1][player_cell_x][player_cell_z]
+                if player_cell_y < MAZE_LEVELS - 1:
+                    higher_cell = self.cells[player_cell_y + 1][player_cell_x][player_cell_z]
                     colliders.extend(self.get_walls_from_cell(higher_cell))
 
             elif player_cell_y >= MAZE_LEVELS:
-                player_cell = self.cells[MAZE_LEVELS-1][player_cell_x][player_cell_z]
+                player_cell = self.cells[MAZE_LEVELS - 1][player_cell_x][player_cell_z]
                 colliders.extend(self.get_walls_from_cell(player_cell))
 
         self.player.update(self.keys, colliders, delta_time)
@@ -301,6 +309,15 @@ class GraphicsProgram3D:
     def draw_moving(self):
         for cube in self.moving_cubes:
             cube.draw()
+
+    def draw_cubes(self):
+        self.init_cube.set_vertices()
+        self.draw_walls()
+        self.draw_moving()
+
+    def draw_spheres(self):
+        self.init_sphere.set_vertices()
+        self.reward.draw()
 
     def display(self):
         glEnable(
@@ -326,11 +343,14 @@ class GraphicsProgram3D:
 
         lights.append(Light(pos.x, pos.y, pos.z, c, self.shader))
 
-        if self.player.top_pos.y // WALL_HEIGHT >= MAZE_LEVELS and not self.reward.collected: lights.append(self.reward.light)
+        if self.player.top_pos.y // WALL_HEIGHT >= MAZE_LEVELS and not self.reward.collected:
+            lights.append(self.reward.light)
 
-        for light in self.lights:
-            if light.pos.y // WALL_HEIGHT == self.player.top_pos.y // WALL_HEIGHT:
-                lights.append(light)
+        for light in self.moving_cubes:
+            if ((light.start_point.y + FLOOR_THICKNESS) // WALL_HEIGHT == self.player.top_pos.y // WALL_HEIGHT or \
+                (light.end_point.y + FLOOR_THICKNESS) // WALL_HEIGHT == self.player.top_pos.y // WALL_HEIGHT) and \
+                (light.start_point.x // CELL_SIZE == self.player.pos.x // CELL_SIZE and light.start_point.z // CELL_SIZE == self.player.pos.z // CELL_SIZE):
+                lights.append(light.light)
 
         Light(0, 0, 0, Color(0, 0, 0, 0, 1), self.shader).reset()
         for i, light in enumerate(lights):
@@ -338,9 +358,8 @@ class GraphicsProgram3D:
 
         self.player.draw()
 
-        self.draw_walls()
-
-        self.draw_moving()
+        self.draw_cubes()
+        self.draw_spheres()
 
         pygame.display.flip()
 
@@ -363,6 +382,10 @@ class GraphicsProgram3D:
 
             self.update()
             self.display()
+
+            if self.reward.collected:
+                print("Time to go outside now")
+                exiting = True
 
         # OUT OF GAME LOOP
         pygame.quit()
