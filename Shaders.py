@@ -30,7 +30,7 @@ class Shader3D:
         glAttachShader(self.renderingProgramID, vert_shader)
         glAttachShader(self.renderingProgramID, frag_shader)
         result = glLinkProgram(self.renderingProgramID)
-        if (result != 1):
+        if (result != None):
             print("Couldn't link program\nProgram link Log:\n" + str(glGetProgramInfoLog(self.renderingProgramID)))
 
 
