@@ -24,6 +24,8 @@ uniform vec4 u_light_positions[u_NUM_OF_LIGHTS];
 varying vec4 lights_s[u_NUM_OF_LIGHTS];
 varying vec4 lights_h[u_NUM_OF_LIGHTS];
 
+uniform int light_amount;
+
 void main(void)
 {
 	vec4 position = vec4(a_position.x, a_position.y, a_position.z, 1.0);
@@ -43,7 +45,7 @@ void main(void)
 
 	vec4 s;
 	vec4 v;
-	for(int i = 0; i < u_NUM_OF_LIGHTS; i++){
+	for(int i = 0; i < light_amount; i++){
 		// Diffuse
 		s = normalize(u_light_positions[i] - position);
 		lights_s[i] = s;

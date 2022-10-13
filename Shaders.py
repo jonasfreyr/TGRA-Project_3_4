@@ -64,6 +64,8 @@ class Shader3D:
         # self.lightAmbientLoc = glGetUniformLocation(self.renderingProgramID, "u_light_ambient")
         self.matAmbientLoc = glGetUniformLocation(self.renderingProgramID, "u_material_ambient")
 
+        self.lightAmountLoc = glGetUniformLocation(self.renderingProgramID, "light_amount")
+
     def use(self):
         try:
             glUseProgram(self.renderingProgramID)
@@ -120,3 +122,7 @@ class Shader3D:
 
     def set_material_ambient(self, r, g, b):
         glUniform4f(self.matAmbientLoc, r, g, b, 0.0)
+
+
+    def set_light_amount(self, amount):
+        glUniform1i(self.lightAmountLoc, amount)

@@ -352,7 +352,10 @@ class GraphicsProgram3D:
                 (light.start_point.x // CELL_SIZE == self.player.pos.x // CELL_SIZE and light.start_point.z // CELL_SIZE == self.player.pos.z // CELL_SIZE):
                 lights.append(light.light)
 
-        Light(0, 0, 0, Color(0, 0, 0, 0, 1), self.shader).reset()
+        # Light(0, 0, 0, Color(0, 0, 0, 0, 1), self.shader).reset()
+
+        self.shader.set_light_amount(len(lights))
+
         for i, light in enumerate(lights):
             light.draw(i)
 

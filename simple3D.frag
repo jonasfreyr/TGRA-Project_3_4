@@ -16,6 +16,8 @@ uniform vec4 u_light_diffuses[u_NUM_OF_LIGHTS];
 uniform vec4 u_light_speculars[u_NUM_OF_LIGHTS];
 uniform vec4 u_light_ambients[u_NUM_OF_LIGHTS];
 
+uniform int light_amount;
+
 void main(void)
 {
     vec4 color;
@@ -24,7 +26,7 @@ void main(void)
     float phong;
     vec4 specular_color;
     vec4 ambient_color;
-    for(int i = 0; i < u_NUM_OF_LIGHTS; i++){
+    for(int i = 0; i < light_amount; i++){
         // Diffuse
         lambert = max(dot(normalize(normal_normal), normalize(lights_s[i])), 0.0);
         diffuse_color = lambert * u_light_diffuses[i] * u_material_diffuse;
